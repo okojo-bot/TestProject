@@ -205,13 +205,21 @@ void init_board()
     ko_z = 0;
 }
 
-void add_moves(int z, int color)
+int OK = 0;
+int NG = 1;
+
+int add_moves(int z, int color)
 {
     int err = put_stone(z, color, FILL_EYE_OK);
-    if ( err != 0 ) { prt("Err!\n"); exit(0); }
+    if ( err != 0 ) {
+    	 prt("Err!\n");
+         return NG; 
+    	 }
     record[moves] = z;
     moves++;
     print_board();
+    
+    return OK;
 }
 
 #define STR_MAX 256
@@ -228,6 +236,7 @@ int main()
     int x,y,z,ax, count;
     int mane_x,mane_y;
     int passflag = 0;
+	int chk_add_move = 0;
 
     srand( (unsigned)time( NULL ) );
     init_board();
@@ -257,7 +266,7 @@ int main()
         } else if ( strstr(sa[0],"name")          ) {
             send_gtp("= MANEGO_BOT\n\n");
         } else if ( strstr(sa[0],"version")       ) {
-            send_gtp("= 1.0.0\n\n");
+            send_gtp("= 1.1.0\n\n");
         } else if ( strstr(sa[0],"list_commands" ) ) {
             send_gtp("= boardsize\nclear_board\nquit\nprotocol_version\n"
                      "name\nversion\nlist_commands\nkomi\ngenmove\nplay\n\n");
@@ -329,7 +338,12 @@ int main()
                 }
 
                 z = get_z(x, B_SIZE-y+1);
-                add_moves(z, color);
+                chk_add_move = add_moves(z, color);
+                if (chk_add_move == NG) {
+                	
+                    send_gtp("= resign\n\n");	
+                }
+
 
                 /* COMの着手用 */
                 prt("COMの着手\n");
@@ -361,7 +375,12 @@ int main()
                 passflag = 1;
             }
 
-            add_moves(z, color);
+            chk_add_move = add_moves(z, color);
+            if (chk_add_move == NG) {
+                	
+                    send_gtp("= resign\n\n");	
+            }
+
 
             /* 人間の着手用 */
             prt("人間の着手\n");
