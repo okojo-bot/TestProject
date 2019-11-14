@@ -212,9 +212,9 @@ int add_moves(int z, int color)
 {
     int err = put_stone(z, color, FILL_EYE_OK);
     if ( err != 0 ) {
-    	 prt("Err!\n");
+         prt("Err!\n");
          return NG; 
-    	 }
+        }
     record[moves] = z;
     moves++;
     print_board();
@@ -234,9 +234,11 @@ int main()
     const char *str_board[4] = { ".","X","O","#" };
 
     int x,y,z,ax, count;
-    int mane_x,mane_y;
+	int mane_x = 0;
+    int mane_y = 0;
     int passflag = 0;
-	int chk_add_move = 0;
+    int resign_flag = 0;
+    int chk_add_move = 0;
 
     srand( (unsigned)time( NULL ) );
     init_board();
@@ -266,7 +268,7 @@ int main()
         } else if ( strstr(sa[0],"name")          ) {
             send_gtp("= MANEGO_BOT\n\n");
         } else if ( strstr(sa[0],"version")       ) {
-            send_gtp("= 1.1.0\n\n");
+            send_gtp("= 1.1.1\n\n");
         } else if ( strstr(sa[0],"list_commands" ) ) {
             send_gtp("= boardsize\nclear_board\nquit\nprotocol_version\n"
                      "name\nversion\nlist_commands\nkomi\ngenmove\nplay\n\n");
@@ -278,6 +280,7 @@ int main()
             if ( tolower(sa[1][0])=='w' ) color = 2;
 
             prt("passflag:%d\n",passflag);
+            prt("resign_flag:%d\n",resign_flag);
             x = (B_SIZE + 1)/2;
             y = (B_SIZE + 1)/2;
 
@@ -327,6 +330,17 @@ int main()
                 send_gtp("= %s\n\n",get_char_z(z));
             }
 
+            /**********************/
+            /* •Ô‚¹‚È‚¢’…è‚Í“Š—¹ */
+            /**********************/
+            else if(resign_flag == 1){
+                /* Ÿ‚Ì‘Î‹Ç‚É”õ‚¦•Ï”‚ğ‰Šú‰»‚·‚é */
+                mane_x =0;
+                mane_y =0;
+                passflag = 0;
+                resign_flag = 0;
+                send_gtp("= resign\n\n");
+            }
             else{
 
                 x = (B_SIZE + 1)/2;
@@ -340,21 +354,22 @@ int main()
                 z = get_z(x, B_SIZE-y+1);
                 chk_add_move = add_moves(z, color);
                 if (chk_add_move == NG) {
-                	
-                    send_gtp("= resign\n\n");	
+
+                    prt("add_moves NG!!\n");
+                    send_gtp("= resign\n\n");
                 }
+                else{
+                    /* COM‚Ì’…è—p */
+                    prt("COM‚Ì’…è\n");
+                    prt("passflag:%d\n",passflag);
+                    prt("x:%d\n",x);
+                    prt("y:%d\n",y);
+                    prt("z:%d\n",z);
+                    prt("mane_x:%d\n",mane_x);
+                    prt("mane_y:%d\n",mane_y);
 
-
-                /* COM‚Ì’…è—p */
-                prt("COM‚Ì’…è\n");
-                prt("passflag:%d\n",passflag);
-                prt("x:%d\n",x);
-                prt("y:%d\n",y);
-                prt("z:%d\n",z);
-                prt("mane_x:%d\n",mane_x);
-                prt("mane_y:%d\n",mane_y);
-
-                send_gtp("= %s\n\n",get_char_z(z));
+                    send_gtp("= %s\n\n",get_char_z(z));
+                }
             }
 
         } else if ( strstr(sa[0],"play") ) {
@@ -377,8 +392,9 @@ int main()
 
             chk_add_move = add_moves(z, color);
             if (chk_add_move == NG) {
-                	
-                    send_gtp("= resign\n\n");	
+                    resign_flag	= 1;
+                    prt("add_moves NG!\n");
+                    prt("resign_flag:%d\n",resign_flag);
             }
 
 
